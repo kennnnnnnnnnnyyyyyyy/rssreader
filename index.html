@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSS 订阅阅读器</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1><i class="fas fa-rss"></i> RSS 阅读器</h1>
+            </div>
+            
+            <!-- 添加RSS源 -->
+            <div class="add-feed-section">
+                <h3>添加RSS源</h3>
+                <div class="add-feed-form">
+                    <input type="url" id="rss-url" placeholder="输入RSS链接..." />
+                    <button id="add-feed-btn" class="btn-primary">
+                        <i class="fas fa-plus"></i> 添加
+                    </button>
+                </div>
+            </div>
+            
+            <!-- RSS源列表 -->
+            <div class="feeds-section">
+                <h3>订阅源</h3>
+                <div id="feeds-list" class="feeds-list">
+                    <!-- RSS源将在这里动态添加 -->
+                </div>
+            </div>
+            
+            <!-- 预设RSS源 -->
+            <div class="preset-feeds">
+                <h3>推荐源</h3>
+                <div class="preset-feed-item" data-url="https://feeds.bbci.co.uk/news/rss.xml">
+                    <i class="fas fa-globe"></i> BBC News
+                </div>
+                <div class="preset-feed-item" data-url="https://rss.cnn.com/rss/edition.rss">
+                    <i class="fas fa-newspaper"></i> CNN
+                </div>
+                <div class="preset-feed-item" data-url="https://feeds.feedburner.com/TechCrunch">
+                    <i class="fas fa-laptop"></i> TechCrunch
+                </div>
+                <div class="preset-feed-item" data-url="https://www.zhihu.com/rss">
+                    <i class="fas fa-question-circle"></i> 知乎热门
+                </div>
+            </div>
+        </aside>
+        
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- 顶部工具栏 -->
+            <header class="toolbar">
+                <div class="search-container">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="search-input" placeholder="搜索文章..." />
+                </div>
+                <div class="toolbar-actions">
+                    <button id="refresh-btn" class="btn-secondary">
+                        <i class="fas fa-sync-alt"></i> 刷新
+                    </button>
+                    <button id="mark-all-read-btn" class="btn-secondary">
+                        <i class="fas fa-check-double"></i> 全部已读
+                    </button>
+                    <select id="sort-select" class="sort-select">
+                        <option value="date-desc">最新优先</option>
+                        <option value="date-asc">最旧优先</option>
+                        <option value="title">标题排序</option>
+                    </select>
+                </div>
+            </header>
+            
+            <!-- 文章列表 -->
+            <div class="articles-container">
+                <div id="articles-list" class="articles-list">
+                    <!-- 文章将在这里动态加载 -->
+                </div>
+                
+                <!-- 加载状态 -->
+                <div id="loading" class="loading hidden">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>正在加载...</span>
+                </div>
+                
+                <!-- 空状态 -->
+                <div id="empty-state" class="empty-state">
+                    <i class="fas fa-rss"></i>
+                    <h3>欢迎使用RSS阅读器</h3>
+                    <p>请在左侧添加RSS源开始阅读</p>
+                </div>
+            </div>
+        </main>
+        
+        <!-- 文章详情模态框 -->
+        <div id="article-modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modal-title"></h2>
+                    <button id="close-modal" class="close-btn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="article-meta">
+                        <span id="modal-source"></span>
+                        <span id="modal-date"></span>
+                    </div>
+                    <div id="modal-content" class="article-content"></div>
+                    <div class="modal-actions">
+                        <a id="modal-link" href="#" target="_blank" class="btn-primary">
+                            <i class="fas fa-external-link-alt"></i> 阅读原文
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 通知容器 -->
+    <div id="notifications" class="notifications"></div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
+
