@@ -6,6 +6,10 @@
     <title>RSS 订阅阅读器</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
     <div class="app-container">
@@ -13,6 +17,41 @@
         <aside class="sidebar">
             <div class="sidebar-header">
                 <h1><i class="fas fa-rss"></i> RSS 阅读器</h1>
+            </div>
+            
+            <!-- 用户登录区域 -->
+            <div class="user-section">
+                <div id="login-section" class="login-section">
+                    <h3><i class="fas fa-user"></i> 用户登录</h3>
+                    <div class="auth-form">
+                        <input type="email" id="email" placeholder="邮箱地址" />
+                        <input type="password" id="password" placeholder="密码" />
+                        <div class="auth-buttons">
+                            <button id="login-btn" class="btn-primary">登录</button>
+                            <button id="register-btn" class="btn-secondary">注册</button>
+                        </div>
+                        <div class="auth-options">
+                            <button id="guest-mode-btn" class="btn-link">
+                                <i class="fas fa-user-secret"></i> 游客模式
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="user-info" class="user-info" style="display: none;">
+                    <div class="user-avatar">
+                        <i class="fas fa-user-circle"></i>
+                        <span id="user-email"></span>
+                    </div>
+                    <div class="user-actions">
+                        <button id="sync-btn" class="btn-sync" title="同步数据">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <button id="logout-btn" class="btn-logout" title="退出登录">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
             
             <!-- 添加RSS源 -->
@@ -23,6 +62,14 @@
                     <button id="add-feed-btn" class="btn-primary">
                         <i class="fas fa-plus"></i> 添加
                     </button>
+                </div>
+                
+                <!-- 批量导入功能 -->
+                <div class="batch-import">
+                    <button id="batch-import-btn" class="btn-secondary">
+                        <i class="fas fa-file-import"></i> 批量导入
+                    </button>
+                    <input type="file" id="import-file" accept=".opml,.xml,.txt,.json" style="display: none;" />
                 </div>
             </div>
             
@@ -115,6 +162,75 @@
                         <a id="modal-link" href="#" target="_blank" class="btn-primary">
                             <i class="fas fa-external-link-alt"></i> 阅读原文
                         </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 批量导入模态框 -->
+        <div id="import-modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2><i class="fas fa-file-import"></i> 批量导入RSS源</h2>
+                    <button id="close-import-modal" class="close-btn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="import-options">
+                        <div class="import-method">
+                            <h3><i class="fas fa-file-upload"></i> 文件导入</h3>
+                            <p>支持OPML、XML、TXT、JSON格式的RSS源文件</p>
+                            <div class="file-upload-area" id="file-upload-area">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>点击选择文件或拖拽文件到此处</p>
+                                <input type="file" id="file-input" accept=".opml,.xml,.txt,.json" />
+                            </div>
+                        </div>
+                        
+                        <div class="import-method">
+                            <h3><i class="fas fa-edit"></i> 文本导入</h3>
+                            <p>每行一个RSS链接，支持批量粘贴</p>
+                            <textarea id="text-import" placeholder="请输入RSS链接，每行一个：&#10;https://feeds.bbci.co.uk/news/rss.xml&#10;https://rss.cnn.com/rss/edition.rss&#10;https://feeds.feedburner.com/TechCrunch"></textarea>
+                        </div>
+                        
+                        <div class="import-method">
+                            <h3><i class="fas fa-list"></i> 预设源包</h3>
+                            <p>选择预设的RSS源组合</p>
+                            <div class="preset-packages">
+                                <button class="preset-package" data-package="news">
+                                    <i class="fas fa-newspaper"></i>
+                                    <span>新闻媒体</span>
+                                    <small>BBC, CNN, Reuters等</small>
+                                </button>
+                                <button class="preset-package" data-package="tech">
+                                    <i class="fas fa-laptop"></i>
+                                    <span>科技资讯</span>
+                                    <small>TechCrunch, Wired等</small>
+                                </button>
+                                <button class="preset-package" data-package="chinese">
+                                    <i class="fas fa-globe-asia"></i>
+                                    <span>中文资讯</span>
+                                    <small>知乎, 36氪等</small>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="import-actions">
+                        <button id="import-confirm-btn" class="btn-primary">
+                            <i class="fas fa-check"></i> 开始导入
+                        </button>
+                        <button id="export-btn" class="btn-secondary">
+                            <i class="fas fa-download"></i> 导出当前源
+                        </button>
+                    </div>
+                    
+                    <div id="import-progress" class="import-progress hidden">
+                        <div class="progress-bar">
+                            <div class="progress-fill"></div>
+                        </div>
+                        <p class="progress-text">正在导入RSS源...</p>
                     </div>
                 </div>
             </div>
