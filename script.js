@@ -58,11 +58,25 @@ class RSSReader {
     // 绑定事件
     bindEvents() {
         // 登录相关事件
-        document.getElementById('login-btn').addEventListener('click', () => this.login());
-        document.getElementById('register-btn').addEventListener('click', () => this.register());
-        document.getElementById('guest-mode-btn').addEventListener('click', () => this.enterGuestMode());
-        document.getElementById('logout-btn').addEventListener('click', () => this.logout());
-        document.getElementById('sync-btn').addEventListener('click', () => this.syncData());
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const guestBtn = document.getElementById('guest-mode-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const syncBtn = document.getElementById('sync-btn');
+
+        if (loginBtn) loginBtn.addEventListener('click', () => this.login());
+        if (registerBtn) registerBtn.addEventListener('click', () => this.register());
+        if (guestBtn) guestBtn.addEventListener('click', () => this.enterGuestMode());
+        if (logoutBtn) logoutBtn.addEventListener('click', () => this.logout());
+        if (syncBtn) syncBtn.addEventListener('click', () => this.syncData());
+
+        // 监听回车键登录
+        const passwordInput = document.getElementById('password');
+        if (passwordInput) {
+            passwordInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') this.login();
+            });
+        }
         
         // RSS源管理
         document.getElementById('add-feed-btn').addEventListener('click', () => this.addFeed());
@@ -151,8 +165,10 @@ class RSSReader {
     
     // 用户认证功能
     async login() {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
         
         if (!email || !password) {
             this.showNotification('请输入邮箱和密码', 'error');
@@ -164,12 +180,19 @@ class RSSReader {
             if (email.includes('@') && password.length >= 6) {
                 const user = { email, uid: 'demo-' + Date.now() };
                 this.currentUser = user;
+                this.isGuest = false;
                 localStorage.setItem('rss-user', JSON.stringify(user));
+                localStorage.removeItem('rss-guest-mode');
+                
                 this.showUserInfo();
                 this.loadUserData();
                 this.showNotification('登录成功！');
+                
+                // 清空输入框
+                emailInput.value = '';
+                passwordInput.value = '';
             } else {
-                throw new Error('邮箱格式错误或密码太短');
+                throw new Error('邮箱格式错误或密码太短（至少6位）');
             }
         } catch (error) {
             this.showNotification('登录失败: ' + error.message, 'error');
@@ -177,8 +200,10 @@ class RSSReader {
     }
     
     async register() {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
         
         if (!email || !password) {
             this.showNotification('请输入邮箱和密码', 'error');
@@ -190,9 +215,16 @@ class RSSReader {
             if (email.includes('@') && password.length >= 6) {
                 const user = { email, uid: 'demo-' + Date.now() };
                 this.currentUser = user;
+                this.isGuest = false;
                 localStorage.setItem('rss-user', JSON.stringify(user));
+                localStorage.removeItem('rss-guest-mode');
+                
                 this.showUserInfo();
+                this.loadUserData(); // 注册后也尝试加载数据（虽然是空的）
                 this.showNotification('注册成功！');
+                
+                emailInput.value = '';
+                passwordInput.value = '';
             } else {
                 throw new Error('邮箱格式错误或密码至少6位');
             }
@@ -636,9 +668,16 @@ class RSSReader {
     
     // RSS源管理（原有功能）
     async addFeed() {
-        const url = document.getElementById('rss-url').value.trim();
+        const urlInput = document.getElementById('rss-url');
+        const url = urlInput.value.trim();
         if (!url) {
             this.showNotification('请输入RSS链接', 'error');
+            return;
+        }
+
+        // 简单的 URL 格式验证
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            this.showNotification('请输入有效的 http/https 链接', 'error');
             return;
         }
         
@@ -651,7 +690,7 @@ class RSSReader {
         const feed = {
             id: Date.now(),
             url: url,
-            title: 'Loading...',
+            title: '正在加载...',
             articles: [],
             lastUpdated: new Date().toISOString()
         };
@@ -660,13 +699,16 @@ class RSSReader {
         this.renderFeeds();
         this.saveData();
         
-        document.getElementById('rss-url').value = '';
+        urlInput.value = '';
+        this.showLoading();
         
         try {
             await this.loadFeedArticles(feed);
             this.showNotification(`成功添加RSS源: ${feed.title}`);
         } catch (error) {
-            this.showNotification('加载RSS源失败: ' + error.message, 'error');
+            this.showNotification('加载RSS源失败，已使用模拟数据展示', 'warning');
+        } finally {
+            this.hideLoading();
         }
     }
     
