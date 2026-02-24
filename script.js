@@ -117,6 +117,36 @@ class RSSReader {
         document.getElementById('import-modal').addEventListener('click', (e) => {
             if (e.target.id === 'import-modal') this.hideImportModal();
         });
+
+        // 事件委托：处理动态生成的元素点击
+        document.getElementById('feeds-list').addEventListener('click', (e) => {
+            const removeBtn = e.target.closest('.feed-remove');
+            if (removeBtn) {
+                const feedId = parseFloat(removeBtn.dataset.id);
+                this.removeFeed(feedId);
+                return;
+            }
+
+            const feedItem = e.target.closest('.feed-item');
+            if (feedItem) {
+                const feedId = parseFloat(feedItem.dataset.id);
+                this.selectFeed(feedId, feedItem);
+            }
+        });
+
+        document.getElementById('articles-list').addEventListener('click', (e) => {
+            const toggleBtn = e.target.closest('.toggle-read-btn');
+            if (toggleBtn) {
+                this.toggleReadStatus(toggleBtn.dataset.id);
+                return;
+            }
+
+            const detailBtn = e.target.closest('.show-detail-btn');
+            if (detailBtn) {
+                this.showArticleDetail(detailBtn.dataset.id);
+                return;
+            }
+        });
     }
     
     // 用户认证功能
@@ -759,33 +789,29 @@ class RSSReader {
         
         this.feeds.forEach(feed => {
             const feedElement = document.createElement('div');
-            feedElement.className = 'feed-item';
+            feedElement.className = `feed-item ${this.currentFeed === feed.id ? 'active' : ''}`;
+            feedElement.dataset.id = feed.id;
             feedElement.innerHTML = `
                 <div class="feed-info">
                     <div class="feed-title">${feed.title}</div>
                     <div class="feed-count">${feed.articles?.length || 0} 篇文章</div>
                 </div>
-                <button class="feed-remove" onclick="rssReader.removeFeed(${feed.id})" title="删除">
+                <button class="feed-remove" data-id="${feed.id}" title="删除">
                     <i class="fas fa-times"></i>
                 </button>
             `;
-            
-            feedElement.addEventListener('click', (e) => {
-                if (!e.target.closest('.feed-remove')) {
-                    this.selectFeed(feed.id);
-                }
-            });
-            
             feedsList.appendChild(feedElement);
         });
     }
-    
-    selectFeed(feedId) {
+
+    selectFeed(feedId, element) {
         this.currentFeed = feedId;
         document.querySelectorAll('.feed-item').forEach(item => {
             item.classList.remove('active');
         });
-        event.currentTarget.classList.add('active');
+        if (element) {
+            element.classList.add('active');
+        }
         this.renderArticles();
     }
     
@@ -834,11 +860,11 @@ class RSSReader {
                     <p class="article-description">${this.truncateText(article.description, 150)}</p>
                 </div>
                 <div class="article-actions">
-                    <button class="article-btn" onclick="rssReader.toggleReadStatus('${article.id}')">
+                    <button class="article-btn toggle-read-btn" data-id="${article.id}">
                         <i class="fas fa-${isRead ? 'eye-slash' : 'eye'}"></i>
                         ${isRead ? '标为未读' : '标为已读'}
                     </button>
-                    <button class="article-btn" onclick="rssReader.showArticleDetail('${article.id}')">
+                    <button class="article-btn show-detail-btn" data-id="${article.id}">
                         <i class="fas fa-expand"></i> 查看详情
                     </button>
                     <a href="${article.link}" target="_blank" class="article-btn">
