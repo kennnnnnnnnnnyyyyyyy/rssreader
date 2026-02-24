@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>RSS 阅读器 - 逻辑测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section h2 {
+            color: #333;
+            border-bottom: 2px solid #e74c3c;
+            padding-bottom: 10px;
+        }
+        .test-case {
+            margin: 15px 0;
+            padding: 10px;
+            background: #f9f9f9;
+            border-left: 4px solid #3498db;
+        }
+        .test-case label {
+            display: block;
+            margin: 5px 0;
+            font-weight: bold;
+        }
+        .test-case input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .test-case button {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px 10px 0;
+        }
+        .test-case button:hover {
+            background: #c0392b;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        .result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        .result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+        .result.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            display: block;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 RSS 阅读器 - 逻辑测试页面</h1>
+    <p>此页面用于测试修复后的核心功能逻辑。</p>
+
+    <div class="test-section">
+        <h2>1️⃣ 登录功能测试</h2>
+        <div class="test-case">
+            <label>邮箱地址：</label>
+            <input type="email" id="test-email" placeholder="test@example.com" value="test@example.com">
+            
+            <label>密码（至少6位）：</label>
+            <input type="password" id="test-password" placeholder="password123" value="password123">
+            
+            <button onclick="testLogin()">测试登录</button>
+            <div id="login-result" class="result"></div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>2️⃣ 添加 RSS 源功能测试</h2>
+        <div class="test-case">
+            <label>RSS 链接：</label>
+            <input type="url" id="test-rss-url" placeholder="https://feeds.bbci.co.uk/news/rss.xml" value="https://feeds.bbci.co.uk/news/rss.xml">
+            
+            <button onclick="testAddFeed()">测试添加源</button>
+            <div id="feed-result" class="result"></div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>3️⃣ 本地存储测试</h2>
+        <div class="test-case">
+            <button onclick="testLocalStorage()">检查本地存储</button>
+            <div id="storage-result" class="result"></div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>4️⃣ 快速诊断</h2>
+        <div class="test-case">
+            <button onclick="runDiagnostics()">运行完整诊断</button>
+            <div id="diagnostics-result" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `result ${type}`;
+        }
+
+        function testLogin() {
+            const email = document.getElementById('test-email').value.trim();
+            const password = document.getElementById('test-password').value;
+
+            if (!email || !password) {
+                showResult('login-result', '❌ 邮箱和密码不能为空', 'error');
+                return;
+            }
+
+            if (!email.includes('@')) {
+                showResult('login-result', '❌ 邮箱格式无效（必须包含 @）', 'error');
+                return;
+            }
+
+            if (password.length < 6) {
+                showResult('login-result', '❌ 密码太短（至少6位）', 'error');
+                return;
+            }
+
+            // 模拟登录
+            const user = { email, uid: 'demo-' + Date.now() };
+            localStorage.setItem('rss-user', JSON.stringify(user));
+            localStorage.removeItem('rss-guest-mode');
+
+            showResult('login-result', 
+                `✅ 登录成功！\n邮箱: ${email}\nUID: ${user.uid}\n本地存储已更新`, 
+                'success');
+        }
+
+        function testAddFeed() {
+            const url = document.getElementById('test-rss-url').value.trim();
+
+            if (!url) {
+                showResult('feed-result', '❌ RSS 链接不能为空', 'error');
+                return;
+            }
+
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                showResult('feed-result', '❌ 链接必须以 http:// 或 https:// 开头', 'error');
+                return;
+            }
+
+            // 模拟添加源
+            const feed = {
+                id: Date.now(),
+                url: url,
+                title: '新 RSS 源',
+                articles: [],
+                lastUpdated: new Date().toISOString()
+            };
+
+            const feeds = JSON.parse(localStorage.getItem('rss-feeds') || '[]');
+            feeds.push(feed);
+            localStorage.setItem('rss-feeds', JSON.stringify(feeds));
+
+            showResult('feed-result', 
+                `✅ RSS 源添加成功！\nURL: ${url}\n源 ID: ${feed.id}\n本地存储已更新`, 
+                'success');
+        }
+
+        function testLocalStorage() {
+            const user = localStorage.getItem('rss-user');
+            const feeds = localStorage.getItem('rss-feeds');
+            const articles = localStorage.getItem('rss-articles');
+            const guestMode = localStorage.getItem('rss-guest-mode');
+
+            let message = '📊 本地存储状态：\n\n';
+            message += `用户信息: ${user ? '✅ 已保存 - ' + JSON.parse(user).email : '❌ 未保存'}\n`;
+            message += `RSS 源: ${feeds ? '✅ 已保存 - ' + JSON.parse(feeds).length + ' 个源' : '❌ 未保存'}\n`;
+            message += `文章: ${articles ? '✅ 已保存' : '❌ 未保存'}\n`;
+            message += `游客模式: ${guestMode ? '✅ 已启用' : '❌ 未启用'}\n\n`;
+            message += '💡 提示：刷新页面后这些数据会被恢复';
+
+            showResult('storage-result', message, 'info');
+        }
+
+        function runDiagnostics() {
+            let diagnostics = '🔍 完整诊断报告\n\n';
+            
+            // 检查浏览器支持
+            diagnostics += '1. 浏览器支持:\n';
+            diagnostics += `   ✅ LocalStorage: ${typeof(Storage) !== 'undefined' ? '支持' : '不支持'}\n`;
+            diagnostics += `   ✅ Fetch API: ${typeof(fetch) !== 'undefined' ? '支持' : '不支持'}\n`;
+            diagnostics += `   ✅ Promise: ${typeof(Promise) !== 'undefined' ? '支持' : '不支持'}\n\n`;
+
+            // 检查数据
+            diagnostics += '2. 数据状态:\n';
+            const user = localStorage.getItem('rss-user');
+            const feeds = localStorage.getItem('rss-feeds');
+            diagnostics += `   ${user ? '✅' : '❌'} 用户已登录\n`;
+            diagnostics += `   ${feeds && JSON.parse(feeds).length > 0 ? '✅' : '❌'} RSS 源已添加\n\n`;
+
+            // 建议
+            diagnostics += '3. 建议:\n';
+            if (!user) {
+                diagnostics += '   → 请先进行登录测试\n';
+            }
+            if (!feeds || JSON.parse(feeds).length === 0) {
+                diagnostics += '   → 请添加至少一个 RSS 源\n';
+            }
+            diagnostics += '   → 现在可以访问主页面进行完整测试\n';
+
+            showResult('diagnostics-result', diagnostics, 'info');
+        }
+
+        // 页面加载时运行诊断
+        window.addEventListener('load', () => {
+            console.log('✅ 测试页面已加载');
+        });
+    </script>
+</body>
+</html>

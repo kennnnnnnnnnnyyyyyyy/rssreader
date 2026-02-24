@@ -713,9 +713,10 @@ class RSSReader {
     }
     
     async loadFeedArticles(feed) {
+        this.showLoading();
         try {
             const proxyUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}`;
-            const response = await fetch(proxyUrl);
+            const response = await fetch(proxyUrl, { signal: AbortSignal.timeout(10000) }); // 10秒超时
             const data = await response.json();
             
             if (data.status === 'ok') {
@@ -748,6 +749,7 @@ class RSSReader {
             }
         } catch (error) {
             console.error('加载RSS失败:', error);
+            this.showNotification('无法连接到 RSS 源，正在加载演示数据...', 'info');
             
             // 生成模拟数据用于演示
             feed.title = this.extractTitleFromUrl(feed.url);
